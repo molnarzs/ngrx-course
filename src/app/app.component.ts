@@ -1,7 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { select, Store } from "@ngrx/store";
 import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
+import { map, shareReplay, tap } from "rxjs/operators";
 import {
   NavigationCancel,
   NavigationEnd,
@@ -17,8 +17,19 @@ import {
 })
 export class AppComponent implements OnInit {
   loading = true;
+  isLoggedIn$: Observable<boolean>;
+  isLoggedOut$: Observable<boolean>;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private store: Store<any>) {
+    this.store.subscribe((state) => console.log("STATE:", state));
+
+    this.isLoggedIn$ = this.store.pipe(
+      select((state) => !!state.auth.user),
+      tap((x) => console.log("LOGGED IN:", x)),
+      shareReplay()
+    );
+    this.isLoggedOut$ = this.isLoggedIn$.pipe(map((loggedIn) => !loggedIn));
+  }
 
   ngOnInit() {
     this.router.events.subscribe((event) => {
